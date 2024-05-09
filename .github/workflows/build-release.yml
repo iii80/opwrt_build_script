@@ -1,8 +1,7 @@
 name: Build releases
 
 on:
-  watch:
-    types: started
+  workflow_dispatch:
 
 jobs:
   build:
@@ -16,9 +15,6 @@ jobs:
       fail-fast: false
       matrix:
         model:
-          - armv8
-          - nanopi-r4s
-          - nanopi-r5s
           - x86_64
         tag:
           - type: rc2
@@ -113,10 +109,13 @@ jobs:
       run: |
         export PATH="/opt/clang/bin:$PATH"
         export GITHUB_REPO=${{ github.repository }}
-        BUILD_FAST=y ENABLE_LTO=y ENABLE_LRNG=y ENABLE_BPF=y USE_GCC13=y USE_MOLD=y bash <(curl -sS https://raw.githubusercontent.com/${{ github.repository }}/master/openwrt/build.sh) ${{ matrix.tag.type }} ${{ matrix.model }}
+        export LAN=172.16.1.1
+        export KERNEL_CLANG_LTO=y USE_GCC15=y ENABLE_LTO=y USE_MOLD=y ENABLE_BPF=y ENABLE_LRNG=y BUILD_FAST=y
+        bash <(curl -sS https://raw.githubusercontent.com/${{ github.repository }}/master/openwrt/build.sh) ${{ matrix.tag.type }} ${{ matrix.model }}
         cd openwrt
         tags=$(git describe --abbrev=0 --tags)
-        echo "latest_release=$tags" >>$GITHUB_ENV
+        kernel=$(curl -s "https://raw.githubusercontent.com/${{ github.repository }}/master/tags/kernel-6.6" | awk -F"LINUX_KERNEL_HASH-| =" '/LINUX_KERNEL_HASH/{print $2}')
+        echo "latest_release=$tags-k$kernel" >>$GITHUB_ENV
 
     - name: Extensive logs after a failed compilation
       working-directory: /builder
@@ -143,7 +142,6 @@ jobs:
         elif [ "${{ matrix.model }}" = "x86_64" ]; then
           cp -a openwrt/bin/targets/x86/*/*-ext4-combined-efi.img.gz rom/
           cp -a openwrt/bin/targets/x86/*/*-squashfs-combined-efi.img.gz rom/
-          cp -a openwrt/bin/targets/x86/*/*-generic-rootfs.tar.gz rom/
           cp -a openwrt/bin/targets/x86/*/*-x86-64-generic.manifest info/manifest.txt
           cp -a openwrt/bin/targets/x86/*/config.buildinfo info/config.buildinfo
           cd rom && sha256sum *gz > ../info/sha256sums.txt
@@ -169,7 +167,7 @@ jobs:
       continue-on-error: true
       uses: sbwml/release-action@main
       with:
-        name: OpenWRT-${{ env.latest_release }}
+        name: OpenWrt-${{ env.latest_release }}
         allowUpdates: true
         tag: ${{ env.latest_release }}
         commit: master
