@@ -28,12 +28,11 @@ https://github.com/JohnsonRan/opwrt_build_script/releases
   - [x] RTC 时钟
   - [x] O3、LTO、MOLD、LRNG
 
-| ⚓ 服务 | 🐋 Docker |  🩺 网络  |
-|  :----  |  :----  | :----  |
-| MosDNS | Dockerman | 网速测试 |
-| Watchcat | Docker | 应用过滤 |
-| Mihomo | Dockerd | |
-| | Docker Compose | |
+| ⚓ 服务 |  🩺 网络  |
+|  :----  | :----  |
+| MosDNS | 网速测试 |
+| Watchcat | 应用过滤 |
+| Mihomo | |
 
 ------
 
